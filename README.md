@@ -2,6 +2,8 @@
 
 Acest proiect adună mai multe euristici folosite frecvent pentru problema comis-voiajer (Travelling Salesman Problem – TSP). Codul este scris în Python și poate fi extins cu noi instanțe sau metode de optimizare.
 
+> Pentru un ghid pas cu pas (setup, comenzi CLI/GUI și pipeline complet) consultă și `PROCESS.md`.
+
 ## Plan de lucru propus
 
 1. **Definirea datelor** – Alegem un set de orașe cu coordonate planare (CSV în `data/cities_50.csv`) și construim utilitare pentru a le încărca rapid.
@@ -17,26 +19,22 @@ Urmează să adăugăm și alte metode (de ex. Tabu Search, Ant Colony) dacă es
 
 `data/cities_50.csv` conține 50 de orașe fictive în planul 2D. Coloanele sunt `name,x,y`, iar distanțele sunt calculate cu formula lui Pitagora (distanță Euclidiană).
 
-### Vizualizarea orașelor
+### Aplicație Streamlit
 
-Pentru o vedere rapidă a pozițiilor poți rula:
+Noua interfață grafică oferă:
+- listă cu toate CSV-urile din `data/` și `data/instances/`, plus upload de fișiere noi;
+- încărcarea modelului ML (`models/method_selector.pkl`) și rularea automată a strategiei recomandate imediat ce este găsită (rezultatul apare fără acțiuni suplimentare);
+- posibilitatea de a alege manual altă combinație de heuristici (2-opt, Simulated Annealing și Genetic Algorithm sunt bifate implicit) și de a re-rula solver-ul doar când apeși **Rulează solver**;
+- vizualizarea rutei pe un grafic 2D (puncte și muchii), plus tabelul cu orașe și parametrii detaliați; după fiecare rulare apare automat un al doilea tab unde poți vedea matricea completă a distanțelor euclidiene.
 
-```bash
-python app/plot_cities.py --data data/cities_50.csv --show-labels
-```
-
-Scriptul folosește matplotlib pentru a desena punctele (instalează-l cu `pip install matplotlib` dacă lipsește).
-
-### Interfață GUI (Streamlit)
-
-Poți testa rapid soluțiile și vizualizările dintr-o interfață web simplă folosind Streamlit:
+Rulare:
 
 ```bash
-pip install streamlit matplotlib
-streamlit run app/gui.py
+pip install -r requirements.txt
+streamlit run app/app.py
 ```
 
-GUI-ul îți permite să încarci un CSV nou, să rulezi solver-ul (manual sau folosind modelul ML pentru auto-select) și să vezi ruta afișată pe „hartă” împreună cu distanța și parametrii utilizați.
+Aplicația afișează distanța (lungimea totală a turului), timpul de execuție (în secunde), numele metodei (ML sau manual), ordinea orașelor și parametrii folosiți. Când modifici manual setările, rularea automată se suspendă până la apăsarea butonului.
 
 ## Rulare rapidă
 
@@ -72,6 +70,9 @@ python main.py --method greedy --annealing --seed 42
 
 # Random tour îmbunătățit cu GA
 python main.py --method random --ga --apply-2opt
+
+# Alte dataset-uri + start custom
+python main.py --data data/instances/cities_042.csv --method nearest_neighbor --start 3
 ```
 
 ### Benchmark Pipeline
@@ -119,15 +120,15 @@ Acest script citește tabelul cu feature-uri, antrenează un clasificator simplu
    - b) folosești tabela cu „feature-uri + strategie câștigătoare” ca dataset și antrenezi un model de clasificare (în prezent un clasificator pe centroid).  
    - c) salvezi modelul într-un fișier (JSON/pickle) pentru a-l încărca ulterior.
 
-6. **GUI pentru vizualizare și execuție rapidă**  
-   - a) construiești o interfață (PyQt, Tkinter, Streamlit etc.) care îți permite să selectezi/încarci un nou CSV cu orașe.  
-   - b) GUI-ul afișează orașele pe o „hartă” 2D și trasează linia rutei găsite, astfel încât să vezi vizual calea.  
-   - c) după rularea solver-ului (manual sau auto), interfața prezintă detalii precum distanța totală, numărul de muchii, timpul de execuție și strategia folosită.
+6. **GUI pentru vizualizare și execuție rapidă (acoperit cu Streamlit)**  
+   - a) aplicația `streamlit run app/app.py` permite selectarea/încărcarea instanțelor și rularea solver-ului cu sau fără model ML.  
+   - b) UI-ul afișează orașele și traseul pe grafic, plus statisticile relevante.  
+   - c) utilizatorii pot refuza sugestia ML și pot alege manual o altă metodă.
 
-7. **Auto-Method Integration**  
-   - a) extinzi CLI-ul cu `--auto-method` și `--selector-model`.  
-   - b) când flag-ul e activ, încarci modelul, calculezi feature-urile instanței curente și alegi strategia prezisă.  
-   - c) rulezi solver-ul cu parametrii recomandați; dacă modelul lipsește, revii la metoda aleasă manual.
+7. **Auto-Method Integration (CLI)**  
+   - a) următorul pas este expunerea flag-urilor `--auto-method`/`--selector-model` și în CLI.  
+   - b) când va fi disponibil, CLI-ul va reutiliza aceleași strategii și model ca aplicația Streamlit.  
+   - c) configurațiile implicite vor fi armonizate între CLI și UI.
 
 8. **Validation & Documentation**  
    - a) testezi manual și cu script că fiecare strategie și modul automat produc rute valide pentru diverse instanțe.  
